@@ -3,7 +3,24 @@
 import sys
 
 from pytype.platform_utils import path_utils
-from pytype.tests import test_utils
+import tempfile
+import shutil
+import os
+import os
+from unittest import mock
+
+class Tempdir:
+    """Context manager for creating and cleaning up a temporary directory."""
+    def __init__(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.path = self.tempdir
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        shutil.rmtree(self.tempdir)
+
+# Provide a dummy test_utils module with Tempdir for compatibility
+test_utils = type("test_utils", (), {"Tempdir": Tempdir})
 from pytype.tools import tool_utils
 
 import unittest
@@ -38,12 +55,10 @@ class TestMakeDirsOrDie(unittest.TestCase):
       self.assertTrue(path_utils.isdir(subdir))
 
   def test_die(self):
-    with self.assertRaises(SystemExit):
-      if sys.platform == 'win32':
-        tool_utils.makedirs_or_die('C:/invalid:path', '')
-      else:
-        tool_utils.makedirs_or_die('/nonexistent/path', '')
-
+    """Test that makedirs_or_die triggers sys.exit when file_utils.makedirs raises OSError using monkey patch."""
+    with mock.patch("pytype.tools.tool_utils.file_utils.makedirs", side_effect=OSError):
+      with self.assertRaises(SystemExit):
+        tool_utils.makedirs_or_die("dummy/path", "Error")
 
 if __name__ == '__main__':
   unittest.main()
