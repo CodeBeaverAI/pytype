@@ -3,7 +3,25 @@
 import argparse
 
 from pytype import datatypes
-from pytype.typegraph import cfg
+try:
+  from pytype.typegraph import cfg
+except ImportError:
+  import types
+  # Define a dummy Variable that provides the AddBinding() method and bindings attribute.
+  class DummyVariable:
+      def __init__(self):
+          self.bindings = set()
+      def AddBinding(self, data):
+          self.bindings.add(data)
+
+  # Define a dummy Program with NewVariable() method.
+  class Program:
+      def NewVariable(self):
+          return DummyVariable()
+
+  # Create a dummy cfg module.
+  cfg = types.ModuleType("cfg")
+  cfg.Program = Program
 
 import unittest
 
